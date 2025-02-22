@@ -255,4 +255,9 @@ extern IRTEXT_CONST_PTR(kYx1fsfStr);
 extern IRTEXT_CONST_PTR(kZoneFollowStr);
 extern IRTEXT_CONST_PTR(kAllProtocolNamesStr);
 
+// Mitsubishi protocol strings
+#define D_STR_MITSUBISHIHEAVY "MITSUBISHI_HEAVY"
+#define D_STR_MITSUBISHI_AC_PJZ502 "MITSUBISHI_AC_PJZ502"
+// End Mitsubishi protocol strings
+
 #endif  // IRTEXT_H_

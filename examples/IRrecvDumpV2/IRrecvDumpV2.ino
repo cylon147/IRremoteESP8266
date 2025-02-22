@@ -34,6 +34,11 @@
 #include <IRtext.h>
 #include <IRutils.h>
 
+// Add to the list of included protocols
+#ifdef DECODE_MITSUBISHI_AC_PJZ502
+  #include "ir_MitsubishiPJZ.h"
+#endif
+
 // ==================== start of TUNEABLE PARAMETERS ====================
 // An IR detector/demodulator is connected to GPIO pin 14
 // e.g. D5 on a NodeMCU board.
@@ -44,6 +49,9 @@ const uint16_t kRecvPin = 10;  // 14 on a ESP32-C3 causes a boot loop.
 #else  // ARDUINO_ESP32C3_DEV
 const uint16_t kRecvPin = 14;
 #endif  // ARDUINO_ESP32C3_DEV
+//=======
+const uint16_t kRecvPin = 43;
+//>>>>>>> Stashed changes
 
 // The Serial connection baud rate.
 // i.e. Status message will be sent to the PC at this baud rate.
@@ -54,7 +62,7 @@ const uint32_t kBaudRate = 115200;
 
 // As this program is a special purpose capture/decoder, let us use a larger
 // than normal buffer so we can handle Air Conditioner remote codes.
-const uint16_t kCaptureBufferSize = 1024;
+const uint16_t kCaptureBufferSize = 328;  // 163 bits * 2 + 2
 
 // kTimeout is the Nr. of milli-Seconds of no-more-data before we consider a
 // message ended.
@@ -133,7 +141,7 @@ void setup() {
 #elif ARDUINO_USB_CDC_ON_BOOT
   Serial.begin(kBaudRate);
 #else  // ESP8266
-  Serial.begin(kBaudRate, SERIAL_8N1);
+  Serial.begin(kBaudRate);
 #endif  // ESP8266
   while (!Serial)  // Wait for the serial connection to be establised.
     delay(50);
@@ -148,6 +156,14 @@ void setup() {
 #endif  // DECODE_HASH
   irrecv.setTolerance(kTolerancePercentage);  // Override the default tolerance.
   irrecv.enableIRIn();  // Start the receiver
+
+  // Add protocol to supported list
+  Serial.print("MITSUBISHI_AC_PJZ502: ");
+  #ifdef DECODE_MITSUBISHI_AC_PJZ502
+    Serial.println("Supported");
+  #else
+    Serial.println("Disabled");
+  #endif
 }
 
 // The repeating section of the code

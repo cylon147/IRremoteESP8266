@@ -49,7 +49,6 @@
 #include "ir_Vestel.h"
 #include "ir_Voltas.h"
 #include "ir_Whirlpool.h"
-#include "ir_York.h"
 
 // Constants
 const int8_t kGpioUnused = -1;  ///< A placeholder for not using an actual GPIO.
@@ -435,6 +434,13 @@ void electra(IRElectraAc *ac,
                           const bool filter, const bool clean,
                           const int16_t sleep = -1);
 #endif  // SEND_MITSUBISHIHEAVY
+#if SEND_MITSUBISHI_AC_PJZ502
+  void mitsubishiPJZ(IRMitsubishiPJZ *ac,
+                     const bool on, const stdAc::opmode_t mode,
+                     const float degrees, const stdAc::fanspeed_t fan,
+                     const stdAc::swingv_t swingv, const stdAc::swingh_t swingh,
+                     const bool turbo, const bool light, const bool sleep, const int16_t clock);
+#endif  // SEND_MITSUBISHI_AC_PJZ502  
 #if SEND_NEOCLIMA
   void neoclima(IRNeoclimaAc *ac, const bool on, const stdAc::opmode_t mode,
                 const bool celsius, const float degrees,

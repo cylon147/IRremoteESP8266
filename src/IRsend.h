@@ -472,6 +472,11 @@ class IRsend {
       const uint16_t nbytes = kMitsubishiHeavy152StateLength,
       const uint16_t repeat = kMitsubishiHeavy152MinRepeat);
 #endif
+#if SEND_MITSUBISHI_AC_PJZ502
+  void sendMitsubishiAC_PJZ502(const uint8_t data[], const uint16_t nbytes,
+                               const uint16_t repeat);
+#endif
+
 #if SEND_FUJITSU_AC
   void sendFujitsuAC(const unsigned char data[], const uint16_t nbytes,
                      const uint16_t repeat = kFujitsuAcMinRepeat);

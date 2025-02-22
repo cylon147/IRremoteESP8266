@@ -1,5 +1,7 @@
 {
     "python.linting.pylintEnabled": true,
     "python.linting.flake8Enabled": false,
-    "python.formatting.provider": "yapf"
+    "python.formatting.provider": "yapf",
+    "idf.portWin": "COM10",
+    "cmake.sourceDirectory": "C:/Users/praka/OneDrive/Documents/GitHub/IRremoteESP8266/lib/googletest"
 }

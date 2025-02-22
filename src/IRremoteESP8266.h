@@ -259,6 +259,13 @@
 #define SEND_MITSUBISHI2       _IR_ENABLE_DEFAULT_
 #endif  // SEND_MITSUBISHI2
 
+#ifndef DECODE_MITSUBISHI_AC_PJZ502     
+#define DECODE_MITSUBISHI_AC_PJZ502 _IR_ENABLE_DEFAULT_
+#endif  // DECODE_MITSUBISHI_AC_PJZ502
+#ifndef SEND_MITSUBISHI_AC_PJZ502
+#define SEND_MITSUBISHI_AC_PJZ502 _IR_ENABLE_DEFAULT_
+#endif  // SEND_MITSUBISHI_AC_PJZ502
+
 #ifndef DECODE_DISH
 #define DECODE_DISH            _IR_ENABLE_DEFAULT_
 #endif  // DECODE_DISH
@@ -1011,10 +1018,13 @@
 #define ENABLE_NOISE_FILTER_OPTION true
 #endif  // ENABLE_NOISE_FILTER_OPTION
 
+<<<<<<< Updated upstream
 /// Enumerator for defining and numbering of supported IR protocol.
 /// @note Always add to the end of the list and should never remove entries
 ///  or change order. Projects may save the type number for later usage
 ///  so numbering should always stay the same.
+=======
+>>>>>>> Stashed changes
 enum decode_type_t {
   UNKNOWN = -1,
   UNUSED = 0,
@@ -1093,6 +1103,7 @@ enum decode_type_t {
   HITACHI_AC424,
   SONY_38K,
   EPSON,  // 75
+<<<<<<< Updated upstream
   SYMPHONY,
   HITACHI_AC3,
   DAIKIN64,
@@ -1147,6 +1158,9 @@ enum decode_type_t {
   BLUESTARHEAVY,
   // Add new entries before this one, and update it to point to the last entry.
   kLastDecodeType = BLUESTARHEAVY,
+=======
+  MITSUBISHI_AC_PJZ502,
+>>>>>>> Stashed changes
 };
 
 // Message lengths & required repeat values
@@ -1430,6 +1444,7 @@ const uint16_t kWhynterBits = 32;
 const uint16_t kWowweeBits = 11;
 const uint16_t kWowweeDefaultRepeat = kNoRepeat;
 const uint8_t  kVestelAcBits = 56;
+<<<<<<< Updated upstream
 const uint16_t kXmpBits = 64;
 const uint16_t kZepealBits = 16;
 const uint16_t kZepealMinRepeat = 4;
@@ -1445,6 +1460,13 @@ const uint16_t kRhossDefaultRepeat = 0;
 const uint16_t kClimaButlerBits = 52;
 const uint16_t kYorkBits = 136;
 const uint16_t kYorkStateLength = 17;
+=======
+
+// Add near other Mitsubishi constants
+const uint16_t kMitsubishiPJZStateLength = 18;
+const uint16_t kMitsubishiPJZBits = kMitsubishiPJZStateLength * 8;
+const uint16_t kMitsubishiPJZMinRepeat = 2;
+>>>>>>> Stashed changes
 
 // Legacy defines. (Deprecated)
 #define AIWA_RC_T501_BITS             kAiwaRcT501Bits
@@ -1541,5 +1563,24 @@ const uint16_t kYorkStateLength = 17;
 #endif  // F
 typedef std::string String;
 #endif  // UNIT_TEST
+
+// Add these constants to the protocol definitions
+#define MITSUBISHI_AC_PJZ502_HDR_MARK   6000U
+#define MITSUBISHI_AC_PJZ502_HDR_SPACE  7500U
+#define MITSUBISHI_AC_PJZ502_BIT_MARK   480U
+#define MITSUBISHI_AC_PJZ502_ONE_SPACE  3500U
+#define MITSUBISHI_AC_PJZ502_ZERO_SPACE 1500U
+
+
+// Constants for Mitsubishi PJZ502 (should be near other protocol constants)
+const uint16_t kMitsubishiAC_PJZ502Bits = 163;  // Update to match actual signal length
+const uint16_t kMitsubishiAC_PJZ502StateLength = (kMitsubishiAC_PJZ502Bits + 7) / 8;  // Convert bits to bytes
+const uint16_t kMitsubishiAC_PJZ502HdrMark = 5998;   // Updated from 2997
+const uint16_t kMitsubishiAC_PJZ502HdrSpace = 7488;  // Updated from 7500
+const uint16_t kMitsubishiAC_PJZ502BitMark = 500;    // Updated from 504
+const uint16_t kMitsubishiAC_PJZ502OneSpace = 3482;  // Updated from 3500
+const uint16_t kMitsubishiAC_PJZ502ZeroSpace = 1486; // Updated from 1500
+const uint32_t kMitsubishiAC_PJZ502Gap = 43000;
+const uint16_t kMitsubishiAC_PJZ502MinRepeat = 2;
 
 #endif  // IRREMOTEESP8266_H_

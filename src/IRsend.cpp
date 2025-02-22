@@ -803,6 +803,8 @@ uint16_t IRsend::defaultBits(const decode_type_t protocol) {
     case BLUESTARHEAVY:
       return kBluestarHeavyBits;
     // No default amount of bits.
+    case MITSUBISHI_AC_PJZ502:
+      return kMitsubishiAC_PJZ502Bits;
     case FUJITSU_AC:
     case MWM:
     default:
@@ -1353,6 +1355,11 @@ bool IRsend::send(const decode_type_t type, const uint8_t *state,
       sendMitsubishiHeavy152(state, nbytes);
       break;
 #endif  // SEND_MITSUBISHIHEAVY
+#if SEND_MITSUBISHI_AC_PJZ502
+    case MITSUBISHI_AC_PJZ502:
+      sendMitsubishiAC_PJZ502(state, nbytes, kMitsubishiAC_PJZ502MinRepeat);
+      break;  
+#endif  // SEND_MITSUBISHI_AC_PJZ502
 #if SEND_MWM
     case MWM:
       sendMWM(state, nbytes);
@@ -1448,3 +1455,4 @@ bool IRsend::send(const decode_type_t type, const uint8_t *state,
   }
   return true;
 }
+

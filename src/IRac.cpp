@@ -59,6 +59,7 @@
 #include "ir_Vestel.h"
 #include "ir_Voltas.h"
 #include "ir_Whirlpool.h"
+#include "ir_MitsubishiPJZ.h"
 
 // On the ESP8266 platform we need to use a special version of string handling
 // functions to handle the strings stored in the flash address space.
@@ -2068,6 +2069,29 @@ void IRac::mitsubishiHeavy88(IRMitsubishiHeavy88Ac *ac,
   ac->send();
 }
 
+#if SEND_MITSUBISHI_AC_PJZ502
+void IRac::mitsubishiPJZ(IRMitsubishiPJZ *ac,
+                        const bool on, const stdAc::opmode_t mode,
+                        const float degrees, const stdAc::fanspeed_t fan,
+                        const stdAc::swingv_t swingv, const stdAc::swingh_t swingh, 
+                        const bool turbo, const bool light, const bool sleep, const int16_t clock) {
+  ac->begin();
+  ac->setPower(on);
+  ac->setMode(ac->convertMode(mode));
+  ac->setTemp(degrees);
+  ac->setFan(ac->convertFan(fan));  
+  ac->setSwingV(ac->convertSwingV(swingv));
+  ac->setSwingH(ac->convertSwingH(swingh));
+  ac->setTurbo(turbo);
+  ac->setLight(light);
+  ac->setSleep(sleep >= 0);
+  ac->setClock(clock >= 0);   
+  ac->send();
+}
+#endif  // SEND_MITSUBISHI_AC_PJZ502
+
+
+
 /// Send a Mitsubishi Heavy 152-bit A/C message with the supplied settings.
 /// @param[in, out] ac A Ptr to an IRMitsubishiHeavy152Ac object to use.
 /// @param[in] on The power setting.
@@ -3464,6 +3488,16 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
       break;
     }
 #endif  // SEND_MITSUBISHIHEAVY
+#if SEND_MITSUBISHI_AC_PJZ502
+    case MITSUBISHI_AC_PJZ502:
+    {
+      IRMitsubishiPJZ ac(_pin, _inverted, _modulation);
+      mitsubishiPJZ(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+                    send.swingh, send.turbo, send.light, send.sleep, send.clock);
+      break;
+    }
+#endif  // SEND_MITSUBISHI_AC_PJZ502
+
 #if SEND_NEOCLIMA
     case NEOCLIMA:
     {
@@ -3648,7 +3682,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
       return false;  // Fail, didn't match anything.
   }
   return true;  // Success.
-}  // NOLINT(readability/fn_size)
+}
 
 /// Update the previous state to the current one.
 void IRac::markAsSent(void) {

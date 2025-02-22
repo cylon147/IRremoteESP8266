@@ -7,6 +7,7 @@
 #include "IRtext.h"
 #ifndef UNIT_TEST
 #include <Arduino.h>
+#include "IRtext.h"
 #endif  // UNIT_TEST
 #include "IRremoteESP8266.h"
 #include "i18n.h"
@@ -247,6 +248,7 @@ IRTEXT_CONST_STRING(kRepeatStr, D_STR_REPEAT);  ///< "Repeat"
 IRTEXT_CONST_STRING(kCodeStr, D_STR_CODE);  ///< "Code"
 IRTEXT_CONST_STRING(kBitsStr, D_STR_BITS);  ///< "Bits"
 
+<<<<<<< Updated upstream
 // Model Names
 IRTEXT_CONST_STRING(kYaw1fStr, D_STR_YAW1F);  ///< "YAW1F"
 IRTEXT_CONST_STRING(kYbofbStr, D_STR_YBOFB);  ///< "YBOFB"
@@ -565,3 +567,30 @@ IRTEXT_CONST_BLOB_DECL(kAllProtocolNamesStr) {
     "\x0"  ///< This string requires double null termination.
 };
 IRTEXT_CONST_BLOB_PTR(kAllProtocolNamesStr);
+=======
+const PROGMEM char* kRepeatStr = D_STR_REPEAT;
+
+// Add to the list of protocol names
+const PROGMEM char* kMitsubishiAcPJZ502Str = D_STR_MITSUBISHI_AC_PJZ502;
+
+// With other protocol strings
+const PROGMEM char* kMitsubishiHeavy88Str = D_STR_MITSUBISHIHEAVY "88";
+const PROGMEM char* kMitsubishiHeavy152Str = D_STR_MITSUBISHIHEAVY "152";
+
+const char* decodeType(const decode_type_t protocol) {
+  switch (protocol) {
+    case MITSUBISHI_AC_PJZ502:
+      return kMitsubishiAcPJZ502Str;
+    case MITSUBISHI_HEAVY_88:
+      return kMitsubishiHeavy88Str;
+    case MITSUBISHI_HEAVY_152:
+      return kMitsubishiHeavy152Str;
+    default:
+      return kUnknownStr;
+  }
+}
+
+// Add these lines after the common string definitions (around line 20)
+const PROGMEM char* kBitsStr = D_STR_BITS;
+const PROGMEM char* kCodeStr = D_STR_CODE;
+>>>>>>> Stashed changes
