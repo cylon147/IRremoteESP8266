@@ -1,10 +1,15 @@
 /*
  * Send & receive arbitrary IR codes via a web server or MQTT.
- * Copyright David Conran 2016, 2017, 2018, 2019
+ * Copyright David Conran 2016-2021
  */
 #ifndef EXAMPLES_IRMQTTSERVER_IRMQTTSERVER_H_
 #define EXAMPLES_IRMQTTSERVER_IRMQTTSERVER_H_
 
+#if defined(ESP8266)
+#include <LittleFS.h>
+#else
+#include <SPIFFS.h>
+#endif
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
 #endif  // ESP8266
@@ -27,6 +32,26 @@
 #define EXAMPLES_ENABLE true
 #endif  // EXAMPLES_ENABLE
 
+// Uncomment one of the following to manually override what
+//    type of persistent storage is used.
+// Warning: Changing filesystems will cause all previous locally
+//    saved configuration data to be lost.
+// #define FILESYSTEM SPIFFS
+// #define FILESYSTEM LittleFS
+#ifndef FILESYSTEM
+// Set the default filesystem if none was specified.
+#ifdef ESP8266
+#define FILESYSTEM LittleFS
+#else
+#define FILESYSTEM SPIFFS
+#endif  // defined(ESP8266)
+#endif  // FILESYSTEM
+
+#if (FILESYSTEM == LittleFS)
+#define FILESYSTEMSTR "LittleFS"
+#else
+#define FILESYSTEMSTR "SPIFFS"
+#endif
 // ---------------------- Board Related Settings -------------------------------
 // NOTE: Make sure you set your Serial Monitor to the same speed.
 #define BAUD_RATE 115200  // Serial port Baud rate.
@@ -76,8 +101,9 @@ const IPAddress kSubnetMask = IPAddress(255, 255, 255, 0);
                                    // The unset default is 8%.
                                    // (Uncomment to enable)
 // Do you want/need mdns enabled? (https://en.wikipedia.org/wiki/Multicast_DNS)
+#ifndef MDNS_ENABLE
 #define MDNS_ENABLE true  // `false` to disable and save ~21k of program space.
-
+#endif  // MDNS_ENABLE
 // ----------------------- HTTP Related Settings -------------------------------
 #define FIRMWARE_OTA true  // Allow remote update of the firmware via http.
                            // Less secure if enabled.
@@ -90,6 +116,12 @@ const IPAddress kSubnetMask = IPAddress(255, 255, 255, 0);
 
 // ----------------------- MQTT Related Settings -------------------------------
 #if MQTT_ENABLE
+#ifndef MQTT_BUFFER_SIZE
+// A value of 768 handles most cases easily. Use 1024 or more when using
+// `REPORT_RAW_UNKNOWNS` is recommended.
+#define MQTT_BUFFER_SIZE 768  // Default MQTT packet buffer size.
+#endif  // MQTT_BUFFER_SIZE
+const uint16_t kMqttBufferSize = MQTT_BUFFER_SIZE;  // Packet Buffer size.
 const uint32_t kMqttReconnectTime = 5000;  // Delay(ms) between reconnect tries.
 
 #define MQTT_ACK "sent"  // Sub-topic we send back acknowledgements on.
@@ -100,13 +132,27 @@ const uint32_t kMqttReconnectTime = 5000;  // Delay(ms) between reconnect tries.
 #define MQTT_CLIMATE "ac"  // Sub-topic for the climate topics.
 #define MQTT_CLIMATE_CMND "cmnd"  // Sub-topic for the climate command topics.
 #define MQTT_CLIMATE_STAT "stat"  // Sub-topic for the climate stat topics.
+// Sub-topic for the temperature/humidity sensor stat topics.
+#define MQTT_SENSOR_STAT "sensor"
 // Enable sending/receiving climate via JSON. `true` cost ~5k of program space.
 #define MQTT_CLIMATE_JSON false
+
 // Use Home Assistant-style operation modes.
-// i.e. Change the climate mode to "off" when turning the power "off".
+// TL;DR: Power and Mode are linked together. One changes the other.
+// i.e.
+//  - When power is set to "off", the mode is set to "off".
+//  - When the mode changes from "off" to something else, power is set to "on".
 // See: https://www.home-assistant.io/components/climate.mqtt/#modes
-// Change to false, if your home automation system doesn't like this.
+// *** WARNING ***
+// This setting will cause IRMQTTServer to forget what the previous operation
+// mode was. e.g. a power "on" -> "off" -> "on" will cause it to use the
+// default mode for your A/C, not the previous mode.
+// Typically this is "Auto" or "Cool" mode.
+// Change to false, if your home automation system doesn't like this, or if
+// you want IRMQTTServer to be the authoritative source for controling your
+// A/C.
 #define MQTT_CLIMATE_HA_MODE true
+
 // Do we send an IR message when we reboot and recover the existing A/C state?
 // If set to `false` you may miss requested state changes while the ESP was
 // down. If set to `true`, it will resend the previous desired state sent to the
@@ -125,6 +171,11 @@ const uint32_t kMqttReconnectTime = 5000;  // Delay(ms) between reconnect tries.
 // In theory, you shouldn't need this as you can always clean up by hand, hence
 // it is disabled by default. Note: `false` saves ~1.2k.
 #define MQTT_CLEAR_ENABLE false
+
+#ifndef MQTT_SERVER_AUTODETECT_ENABLE
+// Whether or not MQTT Server IP is detected through mDNS
+#define MQTT_SERVER_AUTODETECT_ENABLE true
+#endif  // MQTT_SERVER_AUTODETECT_ENABLE
 #endif  // MQTT_ENABLE
 
 // ------------------------ IR Capture Settings --------------------------------
@@ -148,13 +199,15 @@ const uint8_t kCaptureTimeout = 15;  // Milliseconds
 const uint16_t kMinUnknownSize = 2 * 10;
 #define REPORT_UNKNOWNS false  // Report inbound IR messages that we don't know.
 #define REPORT_RAW_UNKNOWNS false  // Report the whole buffer, recommended:
-                                   // MQTT_MAX_PACKET_SIZE of 1024 or more
+                                   // MQTT_BUFFER_SIZE of 1024 or more
 
 // Should we use and report individual A/C settings we capture via IR if we
 // can understand the individual settings of the remote.
 // e.g. Aquire the A/C settings from an actual A/C IR remote and override
 //      any local settings set via MQTT/HTTP etc.
+#ifndef USE_DECODED_AC_SETTINGS
 #define USE_DECODED_AC_SETTINGS true  // `false` to disable. `true` to enable.
+#endif  // USE_DECODED_AC_SETTINGS
 // Should we allow or ignore an A/C IR remote to override the A/C protocol/model
 // as set via MQTT or HTTP?
 // e.g. If `true`, you can use any fully supported A/C remote to control
@@ -169,6 +222,25 @@ const uint16_t kMinUnknownSize = 2 * 10;
 // e.g. The IR demodulator is in a completely different location than than the
 //      actual a/c unit.
 #define REPLAY_DECODED_AC_MESSAGE false
+
+// ------------------------ SHT-3x Support -------------------------------------
+// To enable SHT-3x sensor support (such as the Lolin SHT30 Shield), connected
+// to GPIOs 4 and 5 (D2 and D1), do the following:
+//  - uncomment the line in platformio.ini to enable the SHT-3x library
+//  - uncomment the following #define line
+// #define SHT3X_SUPPORT true
+
+// Default address for SHT-3x sensor.
+#define SHT3X_I2C_ADDRESS 0x44
+// Requires MQTT_DISCOVERY_ENABLE to be true as well.
+// If set, will send HA MQTT Discovery messages for the SHT-3x sensor.
+#define SHT3X_MQTT_DISCOVERY_ENABLE true
+// I2C SDA pin for SHT-3x sensor (D2).
+#define SHT3X_I2C_SDA 4
+// I2C SCL pin for SHT-3x sensor (D1).
+#define SHT3X_I2C_SCL 5
+// Check frequency for SHT-3x sensor (in seconds).
+#define SHT3X_CHECK_FREQ 60
 
 // ------------------------ Advanced Usage Only --------------------------------
 
@@ -187,6 +259,7 @@ const uint16_t kMinUnknownSize = 2 * 10;
 #define KEY_POWER "power"
 #define KEY_MODE "mode"
 #define KEY_TEMP "temp"
+#define KEY_HUMIDITY "humidity"
 #define KEY_FANSPEED "fanspeed"
 #define KEY_SWINGV "swingv"
 #define KEY_SWINGH "swingh"
@@ -202,6 +275,9 @@ const uint16_t kMinUnknownSize = 2 * 10;
 #define KEY_JSON "json"
 #define KEY_RESEND "resend"
 #define KEY_VCC "vcc"
+#define KEY_COMMAND "command"
+#define KEY_SENSORTEMP "sensortemp"
+#define KEY_IFEEL "ifeel"
 
 // HTML arguments we will parse for IR code information.
 #define KEY_TYPE "type"  // KEY_PROTOCOL is also checked too.
@@ -209,14 +285,20 @@ const uint16_t kMinUnknownSize = 2 * 10;
 #define KEY_BITS "bits"
 #define KEY_REPEAT "repeats"
 #define KEY_CHANNEL "channel"  // Which IR TX channel to send on.
+#define KEY_SENSORTEMP_DISABLED "sensortemp_disabled"  // For HTML form only,
+                                                       // not sent via MQTT
+                                                       // nor JSON
 
 // GPIO html/config keys
 #define KEY_TX_GPIO "tx"
 #define KEY_RX_GPIO "rx"
 
+// Miscellaneous constants
+#define TOGGLE_JS_FN_NAME "ToggleInputBasedOnCheckbox"
+
 // Text for Last Will & Testament status messages.
-const char* kLwtOnline = "Online";
-const char* kLwtOffline = "Offline";
+const char* const kLwtOnline = "Online";
+const char* const kLwtOffline = "Offline";
 
 const uint8_t kHostnameLength = 30;
 const uint8_t kPortLength = 5;  // Largest value of uint16_t is "65535".
@@ -239,7 +321,7 @@ const uint16_t kJsonAcStateMaxSize = 1024;  // Bytes
 // ----------------- End of User Configuration Section -------------------------
 
 // Constants
-#define _MY_VERSION_ "v1.4.7"
+#define _MY_VERSION_ "v1.8.2"
 
 const uint8_t kRebootTime = 15;  // Seconds
 const uint8_t kQuickDisplayTime = 2;  // Seconds
@@ -264,29 +346,29 @@ const int8_t kRxGpios[] = {
 
 // JSON stuff
 // Name of the json config file in SPIFFS.
-const char* kConfigFile = "/config.json";
-const char* kMqttServerKey = "mqtt_server";
-const char* kMqttPortKey = "mqtt_port";
-const char* kMqttUserKey = "mqtt_user";
-const char* kMqttPassKey = "mqtt_pass";
-const char* kMqttPrefixKey = "mqtt_prefix";
-const char* kHostnameKey = "hostname";
-const char* kHttpUserKey = "http_user";
-const char* kHttpPassKey = "http_pass";
-const char* kCommandDelimiter = ",";
+const char* const kConfigFile = "/config.json";
+const char* const kMqttServerKey = "mqtt_server";
+const char* const kMqttPortKey = "mqtt_port";
+const char* const kMqttUserKey = "mqtt_user";
+const char* const kMqttPassKey = "mqtt_pass";
+const char* const kMqttPrefixKey = "mqtt_prefix";
+const char* const kHostnameKey = "hostname";
+const char* const kHttpUserKey = "http_user";
+const char* const kHttpPassKey = "http_pass";
+const char* const kCommandDelimiter = ",";
 
 // URLs
-const char* kUrlRoot = "/";
-const char* kUrlAdmin = "/admin";
-const char* kUrlAircon = "/aircon";
-const char* kUrlSendDiscovery = "/send_discovery";
-const char* kUrlExamples = "/examples";
-const char* kUrlGpio = "/gpio";
-const char* kUrlGpioSet = "/gpio/set";
-const char* kUrlInfo = "/info";
-const char* kUrlReboot = "/quitquitquit";
-const char* kUrlWipe = "/reset";
-const char* kUrlClearMqtt = "/clear_retained";
+const char* const kUrlRoot = "/";
+const char* const kUrlAdmin = "/admin";
+const char* const kUrlAircon = "/aircon";
+const char* const kUrlSendDiscovery = "/send_discovery";
+const char* const kUrlExamples = "/examples";
+const char* const kUrlGpio = "/gpio";
+const char* const kUrlGpioSet = "/gpio/set";
+const char* const kUrlInfo = "/info";
+const char* const kUrlReboot = "/quitquitquit";
+const char* const kUrlWipe = "/reset";
+const char* const kUrlClearMqtt = "/clear_retained";
 
 #if MQTT_ENABLE
 const uint32_t kBroadcastPeriodMs = MQTTbroadcastInterval * 1000;  // mSeconds.
@@ -294,7 +376,7 @@ const uint32_t kBroadcastPeriodMs = MQTTbroadcastInterval * 1000;  // mSeconds.
 // Default is 5 seconds per IR TX GPIOs (channels) used.
 const uint32_t kStatListenPeriodMs = 5 * 1000 * kNrOfIrTxGpios;  // mSeconds
 const int32_t kMaxPauseMs = 10000;  // 10 Seconds.
-const char* kSequenceDelimiter = ";";
+const char* const kSequenceDelimiter = ";";
 const char kPauseChar = 'P';
 #if defined(ESP8266)
 const uint32_t kChipId = ESP.getChipId();
@@ -303,19 +385,21 @@ const uint32_t kChipId = ESP.getChipId();
 const uint32_t kChipId = ESP.getEfuseMac();  // Discard the top 16 bits.
 #endif  // ESP32
 
-const char* kClimateTopics =
+static const char kClimateTopics[] PROGMEM =
     "(" KEY_PROTOCOL "|" KEY_MODEL "|" KEY_POWER "|" KEY_MODE "|" KEY_TEMP "|"
     KEY_FANSPEED "|" KEY_SWINGV "|" KEY_SWINGH "|" KEY_QUIET "|"
     KEY_TURBO "|" KEY_LIGHT "|" KEY_BEEP "|" KEY_ECONO "|" KEY_SLEEP "|"
-    KEY_FILTER "|" KEY_CLEAN "|" KEY_CELSIUS "|" KEY_RESEND
+    KEY_FILTER "|" KEY_CLEAN "|" KEY_CELSIUS "|" KEY_RESEND "|" KEY_COMMAND "|"
+    "|" KEY_SENSORTEMP "|" KEY_IFEEL
 #if MQTT_CLIMATE_JSON
     "|" KEY_JSON
 #endif  // MQTT_CLIMATE_JSON
     ")<br>";
-const char* kMqttTopics[] = {
+static const char* const kMqttTopics[] = {
     KEY_PROTOCOL, KEY_MODEL, KEY_POWER, KEY_MODE, KEY_TEMP, KEY_FANSPEED,
     KEY_SWINGV, KEY_SWINGH, KEY_QUIET, KEY_TURBO, KEY_LIGHT, KEY_BEEP,
     KEY_ECONO, KEY_SLEEP, KEY_FILTER, KEY_CLEAN, KEY_CELSIUS, KEY_RESEND,
+    KEY_COMMAND, KEY_SENSORTEMP, KEY_IFEEL
     KEY_JSON};  // KEY_JSON needs to be the last one.
 
 
@@ -359,7 +443,8 @@ int8_t getDefaultTxGpio(void);
 String genStatTopic(const uint16_t channel = 0);
 String listOfTxGpios(void);
 bool hasUnsafeHTMLChars(String input);
-String htmlHeader(const String title, const String h1_text = "");
+String htmlHeader(const String title, const String h1_text = "",
+                  const String headScriptsJS = "");
 String htmlEnd(void);
 String htmlButton(const String url, const String button,
                   const String text = "");
@@ -367,8 +452,13 @@ String htmlMenu(void);
 void handleRoot(void);
 String addJsReloadUrl(const String url, const uint16_t timeout_s,
                       const bool notify);
+String getJsToggleCheckbox(const String functionName = TOGGLE_JS_FN_NAME);
 void handleExamples(void);
+String htmlOptionItem(const String value, const String text, bool selected);
 String htmlSelectBool(const String name, const bool def);
+String htmlDisableCheckbox(const String name, const String targetControlId,
+                           const bool checked,
+                           const String toggleJsFnName = TOGGLE_JS_FN_NAME);
 String htmlSelectClimateProtocol(const String name, const decode_type_t def);
 String htmlSelectAcStateProtocol(const String name, const decode_type_t def,
                                  const bool simple);
@@ -397,6 +487,9 @@ bool parseStringAndSendPronto(IRsend *irsend, const String str,
 #if SEND_RAW
 bool parseStringAndSendRaw(IRsend *irsend, const String str);
 #endif  // SEND_RAW
+#if SHT3X_SUPPORT
+void sendMQTTDiscoverySensor(const char *topic, String type);
+#endif  // SH3X_SUPPORT
 void handleIr(void);
 void handleNotFound(void);
 void setup_wifi(void);
