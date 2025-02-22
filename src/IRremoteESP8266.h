@@ -1018,13 +1018,10 @@
 #define ENABLE_NOISE_FILTER_OPTION true
 #endif  // ENABLE_NOISE_FILTER_OPTION
 
-<<<<<<< Updated upstream
-/// Enumerator for defining and numbering of supported IR protocol.
-/// @note Always add to the end of the list and should never remove entries
-///  or change order. Projects may save the type number for later usage
-///  so numbering should always stay the same.
-=======
->>>>>>> Stashed changes
+// Enumerator for defining and numbering of supported IR protocol.
+// @note Always add to the end of the list and should never remove entries
+//  or change order. Projects may save the type number for later usage
+//  so numbering should always stay the same.
 enum decode_type_t {
   UNKNOWN = -1,
   UNUSED = 0,
@@ -1103,7 +1100,7 @@ enum decode_type_t {
   HITACHI_AC424,
   SONY_38K,
   EPSON,  // 75
-<<<<<<< Updated upstream
+  MITSUBISHI_AC_PJZ502,  // Add your new protocol here
   SYMPHONY,
   HITACHI_AC3,
   DAIKIN64,
@@ -1158,9 +1155,6 @@ enum decode_type_t {
   BLUESTARHEAVY,
   // Add new entries before this one, and update it to point to the last entry.
   kLastDecodeType = BLUESTARHEAVY,
-=======
-  MITSUBISHI_AC_PJZ502,
->>>>>>> Stashed changes
 };
 
 // Message lengths & required repeat values
@@ -1444,7 +1438,6 @@ const uint16_t kWhynterBits = 32;
 const uint16_t kWowweeBits = 11;
 const uint16_t kWowweeDefaultRepeat = kNoRepeat;
 const uint8_t  kVestelAcBits = 56;
-<<<<<<< Updated upstream
 const uint16_t kXmpBits = 64;
 const uint16_t kZepealBits = 16;
 const uint16_t kZepealMinRepeat = 4;
@@ -1460,13 +1453,6 @@ const uint16_t kRhossDefaultRepeat = 0;
 const uint16_t kClimaButlerBits = 52;
 const uint16_t kYorkBits = 136;
 const uint16_t kYorkStateLength = 17;
-=======
-
-// Add near other Mitsubishi constants
-const uint16_t kMitsubishiPJZStateLength = 18;
-const uint16_t kMitsubishiPJZBits = kMitsubishiPJZStateLength * 8;
-const uint16_t kMitsubishiPJZMinRepeat = 2;
->>>>>>> Stashed changes
 
 // Legacy defines. (Deprecated)
 #define AIWA_RC_T501_BITS             kAiwaRcT501Bits
